@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 
@@ -36,6 +36,44 @@ export class AuthService {
     });
 
     // Step 4: Return safe user data (without the password)
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+  }
+
+
+  async login(data: {
+    email: string;
+    password: string;
+  }) {
+
+    // Step 1: Find the user by email
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: data.email,
+      },
+    });
+
+    // Step 2: If user does not exist, reject login
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Step 3: Compare entered password with stored hashed password
+    const passwordMatch = await bcrypt.compare(
+      data.password,
+      user.password,
+    );
+
+    // Step 4: If passwords do not match, reject login
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Step 5: Return safe user information
     return {
       id: user.id,
       name: user.name,
