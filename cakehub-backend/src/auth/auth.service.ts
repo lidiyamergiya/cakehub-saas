@@ -1,10 +1,14 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   async register(data: {
     name: string;
@@ -73,12 +77,24 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Step 5: Return safe user information
-    return {
-      id: user.id,
-      name: user.name,
+
+    // Step 5: Create JWT token
+    const token = this.jwtService.sign({
+      sub: user.id,
       email: user.email,
       role: user.role,
+    });
+
+
+    // Step 6: Return token + safe user information
+    return {
+      access_token: token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 }
