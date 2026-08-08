@@ -15,6 +15,20 @@ model User {
   role      Role     @default(CUSTOMER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  bakery    Bakery?
+}
+
+model Bakery {
+  id               Int      @id @default(autoincrement())
+  name             String
+  description      String?
+  address          String?
+  phone            String?
+  telegramUsername String?
+  ownerId          Int      @unique
+
+  owner            User     @relation(fields: [ownerId], references: [id])
 }
 
 enum Role {
